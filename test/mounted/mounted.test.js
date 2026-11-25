@@ -1,52 +1,66 @@
 // The package's protocol as it is mounted: its protocol.js, what a runtime
 // loads through the dispatcher's /protocol entry (imported here directly:
 // this test is itself run by the dispatcher), its config value by value,
-// the layer it brings, and each action run on a minimal execution: the
-// layer extracted from small bundles written for the test, then read. No
-// mrepo is built. Every action the config names must be run here: the
-// last test fails when one was left out.
+// and each action run on a minimal execution: an mrepo's folder with a
+// package's bundle in it, its inbox a function that answers each command,
+// its request log what it answered. No mrepo is built. Every action the
+// config names must be run here: the last test fails when one was left
+// out.
 import test from '../../modules/node_modules/brittle/index.js'
-import os from '../../modules/node_modules/bare-os/index.js'
 import Bundle from '../../modules/node_modules/bare-bundle/index.js'
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from '../../modules/node_modules/bare-fs/index.js'
-import { join, dirname } from '../../modules/node_modules/bare-path/index.js'
-import { fileURLToPath } from '../../modules/node_modules/bare-url/index.js'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from '../../modules/node_modules/bare-fs/index.js'
+import { join } from '../../modules/node_modules/bare-path/index.js'
+import { tmpdir } from '../../modules/node_modules/bare-os/index.js'
 import * as mounted from '../../protocol.js'
 
-const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
-const B = v => Buffer.from(JSON.stringify(v))
-const J = b => JSON.parse(b.toString())
-const HOWTO = (title, activity, check = '# the check: it answers') => `# ${title}\n\nDoes ${title} here.\n\nActivity: ${activity}\n\n## Steps\n\n\`\`\`sh\n# what it needs first\nhaicc . crud/create swarms/swarm-1\n${check}\nhaicc . crud/read swarms/swarm-1\n\`\`\`\n`
-
-// An execution as an action sees it: its files by path, its writes
-// applied at once; the mrepo's folder, its packages' bundles in it.
-function execution (files = {}, dir = null) {
-  const abs = p => (p.startsWith('/') ? p : `/${p}`)
-  const writes = []
-  const exec = {
-    runtime: { dir },
-    read: async p => { if (!(abs(p) in files)) throw new Error(`nothing at ${p}`); return files[abs(p)] },
-    find: async function (p) { try { return await this.read(p) } catch { return null } },
-    log: function (level, event, data = {}) { (this.entries ??= []).push({ level, event, ...data }) },
-    step: async function (event, data, fn, level = 'verbose') { const r = await fn(); (this.entries ??= []).push({ level, event, ...(typeof data === 'function' ? data(r) : data) }); return r },
-    put: (p, bytes) => { writes.push(['put', abs(p)]); files[abs(p)] = Buffer.from(bytes) },
-    remove: p => { writes.push(['remove', abs(p)]); delete files[abs(p)] }
-  }
-  return { exec, files, writes }
-}
-function bundle (dir, name, files) {
+const KEY = 'haiccing/base-package-demo/demo'
+const SCRIPT = '# step: made\n. crud/create swarms\n# expect: "created"\n# step: read\n. crud/read swarms\n# expect: "children":[]\n'
+// An execution as an action sees it: the runtime's view (its folder, its
+// own inbox: submit gives a request its offset, answer its completed
+// form), its request log (request/done, flat here: no structure declared,
+// a record a file by its offset's name); waiting runs the job at once.
+function execution () {
+  const dir = mkdtempSync(join(tmpdir(), 'howto-mounted-'))
+  mkdirSync(join(dir, 'packages', 'haiccing'), { recursive: true })
   const b = new Bundle()
-  for (const [p, text] of Object.entries(files)) b.write(p, Buffer.from(text))
-  mkdirSync(join(dir, 'packages', name.split('/')[0]), { recursive: true })
-  writeFileSync(join(dir, 'packages', `${name}.bundle`), b.toBuffer())
+  b.write('/howto/demo/steps.haicc', SCRIPT)
+  writeFileSync(join(dir, 'packages', 'haiccing', 'base-package-demo.bundle'), b.toBuffer())
+  const done = new Map()
+  const answered = new Map()
+  let clock = 1764000000000
+  const keep = (offset, form) => done.set(`/request/done/${String(offset).padStart(13, '0')}.json`, Buffer.from(JSON.stringify({ offset, value: { offset, value: form } })))
+  const submit = async core => {
+    const offset = clock++
+    const c = core.value.join(' ')
+    const form = { command: core.value, output: c === 'crud/read .' || c === 'crud/read swarms' ? [{ children: [] }] : { outcome: 'created' } }
+    keep(offset, form)
+    answered.set(offset, form)
+    return offset
+  }
+  return {
+    dir,
+    keep: form => keep(clock++, form),
+    runtime: { dir, uri: 'local/howtos', submit, answer: async o => answered.get(o) ?? null, protocols: mounted.protocols },
+    wait: job => job(),
+    put: () => { throw new Error('written') },
+    remove: () => { throw new Error('written') },
+    select: async p => (p === '/request/done/*' ? [...done.keys()].map(k => [k, { type: 'blob' }]) : []),
+    read: async p => { if (!done.has(p)) throw new Error(`not a file: ${p}`); return done.get(p) },
+    find: async p => done.get(p) ?? null,
+    log: function (level, event, data = {}) { (this.entries ??= []).push({ level, event, ...data }) }
+  }
 }
 const ran = new Set()
 // an action that wrote into the execution's log as it ran: every one must
 const logged = new Set()
-const act = async (name, exec, form) => {
+const act = async (name, exec, args) => {
   ran.add(name)
   const before = exec.entries?.length ?? 0
-  try { return await mounted.actions.howto[name](exec, form) } finally { if ((exec.entries?.length ?? 0) > before) logged.add(name) }
+  try {
+    const output = await mounted.actions.howto[name](exec, { protocol: 'howto', action: name, uri: ['main', '.'], args })
+    exec.keep({ protocol: 'howto', action: name, args, output })
+    return output
+  } finally { if ((exec.entries?.length ?? 0) > before) logged.add(name) }
 }
 
 test('loaded as a runtime loads it: one protocol, howto, its config and its actions', (t) => {
@@ -55,46 +69,40 @@ test('loaded as a runtime loads it: one protocol, howto, its config and its acti
   t.alike(Object.keys(mounted.actions.howto).sort(), Object.keys(mounted.protocols.howto.actions).sort(), 'a function for every action configured, and no other')
 })
 
-test('its config, value by value; the layer it brings', (t) => {
+test('its config, value by value', (t) => {
   const cfg = mounted.protocols.howto
   t.is(cfg.package, 'haiccing/base-package-howto', 'the package that brings it')
   t.ok(cfg.description, 'its description')
   t.alike(Object.keys(cfg).sort(), ['actions', 'default', 'description', 'package'], 'nothing else: not behind a state')
-  t.is(cfg.default, 'get', 'its default action: howto alone is howto/get')
-  t.alike(Object.keys(cfg.actions).sort(), ['extract', 'get'])
-  for (const [name, a] of Object.entries(cfg.actions)) {
-    t.alike(a.uris, ['.'], `${name}: at the mrepo itself`)
-    t.ok(a.description, `${name}: its description`)
-    t.absent('states' in a || 'target' in a, `${name}: no states, no target`)
+  t.is(cfg.default, 'run', 'its default action: howto alone is howto/run')
+  t.alike(Object.keys(cfg.actions), ['run', 'step', 'report', 'reset'])
+  for (const a of Object.keys(cfg.actions)) {
+    t.alike(cfg.actions[a].uris, ['.'], `${a}: at the mrepo itself, the scene`)
+    t.ok(cfg.actions[a].description, `${a}: its description`)
+    t.absent('states' in cfg.actions[a] || 'target' in cfg.actions[a], `${a}: no states, no target`)
   }
-  t.alike([cfg.actions.get.args, 'args' in cfg.actions.extract], [['what?'], false], 'get: what is asked, optional; extract: no argument')
-  const layer = JSON.parse(readFileSync(join(pkg, 'mrepo', 'howto', 'layer.json'), 'utf8'))
-  t.alike([layer.mode, Boolean(layer.description)], ['atomic', true], 'its structure: the howto layer, atomic')
+  t.alike(cfg.actions.run.args, ['howto'], 'run: the how-to, by its key')
+  t.alike(cfg.actions.step.args, ['howto'], 'step: the how-to')
+  t.alike(cfg.actions.report.args, ['howto', 'format?'], 'report: the how-to, its format optional')
+  t.alike(cfg.actions.reset.args, ['howto?'], 'reset: the how-to optional, the scene is one')
 })
 
-test('extract, then get: the layer from the packages\' how-tos, read by activity', async (t) => {
-  const dir = mkdtempSync(join(os.tmpdir(), 'howto-mounted-'))
+test('run, step, report, reset: each on a minimal execution, nothing written by the action itself', async (t) => {
+  const exec = execution()
   try {
-    bundle(dir, 'haiccing/one', { '/README.md': '# one\n\nOne.\n', '/howto/deploy/README.md': HOWTO('deploy', 'node'), '/howto/replica/README.md': HOWTO('replica', 'container') })
-    bundle(dir, 'haiccing/two', { '/howto/deploy/README.md': HOWTO('deploy', 'host'), '/howto/odd/README.md': HOWTO('odd', 'host', '# and then') })
-    const { exec, files, writes } = execution({ '/packages/manifest.json': B({ packages: { 'haiccing/one': {}, 'haiccing/two': {} } }) }, dir)
-    await t.exception(act('get', exec, {}), /no how-tos extracted in this mrepo yet \(howto\/extract\)/, 'get before any extraction: said')
-    t.alike(await act('extract', exec, { uri: ['.'] }), { howtos: 4, activities: ['container', 'host', 'node'], changed: true, problems: 1 }, 'extract: the how-tos of both packages, their activities; one against its form, counted')
-    t.alike(Object.keys(files).filter(p => p.startsWith('/howto/')).sort(), ['/howto/container/replica.json', '/howto/host/deploy.json', '/howto/host/odd.json', '/howto/index.json', '/howto/layer.json', '/howto/node/deploy.json', '/howto/problems.json'], 'the layer written: the index, the problems, a document a how-to, its config when it had none')
-    t.alike(J(files['/howto/problems.json']), [{ package: 'haiccing/two', howto: 'odd', check: 'steps', detail: 'its last step is not the check (its why starts with "the check"): haicc . crud/read swarms/swarm-1' }], 'the problem: a how-to whose last step is not the check')
-    const n = writes.length
-    t.alike([(await act('extract', exec, { uri: ['.'] })).changed, writes.length], [false, n], 'again: nothing changed, nothing written')
-    await t.exception(act('extract', exec, { uri: ['main', 'x'] }), /howto extract: the whole mrepo only/)
-    const all = await act('get', exec, {})
-    t.alike(all.activities.map(a => [a.activity, a.howtos.map(h => h.howto)]), [['container', ['container/replica']], ['host', ['host/deploy', 'host/odd']], ['node', ['node/deploy']]], 'get: what can be done here, by activity')
-    t.alike((await act('get', exec, { args: ['host'] })).howtos.map(h => [h.howto, h.package]), [['host/deploy', 'haiccing/two'], ['host/odd', 'haiccing/two']], 'an activity: its how-tos, their package')
-    const one = await act('get', exec, { args: ['node/deploy'] })
-    t.alike([one.howto, one.package, one.help, one.steps], ['node/deploy', 'haiccing/one', 'packages/haiccing/one/howto/deploy', [{ why: 'what it needs first', command: 'haicc . crud/create swarms/swarm-1' }, { why: 'the check: it answers', command: 'haicc . crud/read swarms/swarm-1' }]], 'one how-to: its steps as typed, each with why, the last the check')
-    t.alike([(await act('get', exec, { args: ['pipeline'] })).found, exec.entries.at(-1).level], [false, 'warn'], 'what is not there: said, a warning, no error')
-  } finally { rmSync(dir, { recursive: true, force: true }) }
+    const r = await act('run', exec, [KEY])
+    t.alike([r.howto, r.passed, r.steps, r.ran], [KEY, true, 2, 2], 'run: through, passed')
+    const s = await act('step', exec, [KEY])
+    t.alike([s.step, s.of, s.ok, s.next], [1, 2, true, 2], 'step: after a run, the first again')
+    const p = await act('report', exec, [KEY, 'md'])
+    t.ok(p.markdown.includes(`# ${KEY}`), 'report: the steps done since, as a page')
+    const x = await act('reset', exec, [])
+    t.is(x.reset, true, 'reset: the scene thrown away')
+    await t.exception(mounted.actions.howto.run(exec, { args: ['nope'] }), /not a how-to: nope/, 'a key that is none: refused')
+  } finally { rmSync(exec.dir, { recursive: true, force: true }) }
 })
 
-test('every action the config names was run here', (t) => {
-  t.alike([...ran].sort(), Object.keys(mounted.protocols.howto.actions).sort(), 'extract and get')
-  t.alike([...logged].sort(), Object.keys(mounted.protocols.howto.actions).sort(), 'and each wrote into the request\'s log as it ran: an action that logs nothing fails this')
+test('nothing forgotten: every action configured run here, each writing into the request\'s log', (t) => {
+  t.alike([...ran].sort(), Object.keys(mounted.protocols.howto.actions).sort(), 'every action run')
+  t.alike([...logged].sort(), Object.keys(mounted.protocols.howto.actions).sort(), 'each one logged as it ran')
 })

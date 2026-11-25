@@ -4,15 +4,15 @@ The checks a package runs on itself: its code, the integrity of its mrepo side, 
 
 Every package carrying it gets four units from its dispatcher: `/test/code`,
 `/test/mrepo` and `/test/package` in its `validate`, `/test/mrepo-in-situ`
-in its `validate-in-situ`. In the development repository,
-`tools/code-check.js` runs the code rules over all the carried modules and
-the package check over every package.
+in its `validate-in-situ`. Where the packages are built, a code check
+runs the code rules over all the carried modules, the test page check
+over every module, and the package check over every package.
 
-| | |
-|---|---|
-| [internal/](internal/) | the rules and the checks |
-| [validate/](validate/) | the tests every package carrying it runs on itself |
-| [test/](test/) | its own tests |
+## Links
+
+- [internal](internal/)
+- [validate](validate/)
+- [test](test/)
 
 ## Rules
 
@@ -25,12 +25,15 @@ The code rules:
   another module's test helpers by name, `<module>/test/<file>`.
 - **No transient references**: nothing points at the development
   repository's `docs/` or `steps/`.
+- **A test page that says what is tested**: a module's `test/README.md`
+  has a section a file of `test/` that declares tests, and in it each
+  test by its name, nothing else (`internal/tests`).
 
 The mrepo side:
 
-- **Structure**: every leaf of `mrepo/` has a valid `layer.json`, with its
+- **Structure**: every leaf of `mrepo/` has a valid `.layer.json`, with its
   mode and description; no README inside a layer; a file in a folder
-  without a `layer.json` contributes to a layer another package defines;
+  without a `.layer.json` contributes to a layer another package defines;
   a preloaded request is a well formed record; the packages are listed by
   name.
 - **Protocol**: every action its `protocol.js` configures has its
@@ -60,4 +63,4 @@ The package itself:
 
 ## Tests
 
-- `npm test`: packages and modules written for it, well formed and broken.
+- `brittle-bare test/*.test.js` (Bare installed): packages, modules and test pages written for it, well formed and broken; the patterns and their how-tos; each test by its name in [test/](test/).

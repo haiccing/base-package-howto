@@ -1,8 +1,8 @@
 {
   "package": "haiccing/base-package-howto",
-  "content": "2238a682107b4e8d50de3747444334101cf8d09873ac1c146efc3d1b98c35e42",
+  "content": "17eec89844a6a09979ec287e0d68485b86bb2203a91427655e9031e90c148f05",
   "bare": "v1.36.0",
-  "date": "2026-11-17T01:43:50.080Z",
+  "date": "2026-11-25T05:36:36.124Z",
   "set": "full",
   "ok": true,
   "units": [
@@ -14,13 +14,13 @@
         "total": 4
       },
       "asserts": {
-        "passed": 28,
-        "total": 28
+        "passed": 31,
+        "total": 31
       },
       "failures": []
     },
     {
-      "unit": "/test/help",
+      "unit": "/test/info",
       "ok": true,
       "tests": {
         "passed": 1,
@@ -72,20 +72,59 @@
       "failures": []
     },
     {
-      "unit": "/test/modules/pear-full-square/mrepo-base-help",
+      "unit": "/test/modules/pear-full-square/mrepo-base-howto",
       "ok": true,
       "tests": {
-        "passed": 5,
-        "total": 5
+        "passed": 12,
+        "total": 12
       },
       "asserts": {
-        "passed": 27,
-        "total": 27
+        "passed": 73,
+        "total": 73
       },
       "failures": []
     },
     {
-      "unit": "/test/modules/pear-full-square/mrepo-base-howto",
+      "unit": "/test/modules/pear-full-square/mrepo-base-info",
+      "ok": true,
+      "tests": {
+        "passed": 11,
+        "total": 11
+      },
+      "asserts": {
+        "passed": 92,
+        "total": 92
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mrepo-base-request",
+      "ok": true,
+      "tests": {
+        "passed": 22,
+        "total": 22
+      },
+      "asserts": {
+        "passed": 263,
+        "total": 263
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mrepo-base-xpath",
+      "ok": true,
+      "tests": {
+        "passed": 9,
+        "total": 9
+      },
+      "asserts": {
+        "passed": 97,
+        "total": 97
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-container-document",
       "ok": true,
       "tests": {
         "passed": 6,
@@ -98,15 +137,80 @@
       "failures": []
     },
     {
+      "unit": "/test/modules/pear-full-square/mycelium-git",
+      "ok": true,
+      "tests": {
+        "passed": 144,
+        "total": 144
+      },
+      "asserts": {
+        "passed": 777,
+        "total": 777
+      },
+      "failures": []
+    },
+    {
       "unit": "/test/modules/pear-full-square/mycelium-uri",
       "ok": true,
       "tests": {
-        "passed": 21,
-        "total": 21
+        "passed": 22,
+        "total": 22
       },
       "asserts": {
-        "passed": 195,
-        "total": 195
+        "passed": 217,
+        "total": 217
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-value-avro",
+      "ok": true,
+      "tests": {
+        "passed": 8,
+        "total": 8
+      },
+      "asserts": {
+        "passed": 57,
+        "total": 57
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-value-json",
+      "ok": true,
+      "tests": {
+        "passed": 1,
+        "total": 1
+      },
+      "asserts": {
+        "passed": 3,
+        "total": 3
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-xpath",
+      "ok": true,
+      "tests": {
+        "passed": 22,
+        "total": 22
+      },
+      "asserts": {
+        "passed": 152,
+        "total": 152
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-xpath-physical",
+      "ok": true,
+      "tests": {
+        "passed": 12,
+        "total": 12
+      },
+      "asserts": {
+        "passed": 91,
+        "total": 91
       },
       "failures": []
     },
@@ -114,12 +218,12 @@
       "unit": "/test/modules/pear-full-square/pkgm-base-check",
       "ok": true,
       "tests": {
-        "passed": 17,
-        "total": 17
+        "passed": 26,
+        "total": 26
       },
       "asserts": {
-        "passed": 46,
-        "total": 46
+        "passed": 90,
+        "total": 90
       },
       "failures": []
     }

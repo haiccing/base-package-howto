@@ -1,0 +1,3 @@
+# stop: run as the service closes its door
+protocol/deactivate . boot
+protocol/deactivate . crud

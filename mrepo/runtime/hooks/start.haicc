@@ -1,0 +1,4 @@
+# start: run as the service opens its door: what a how-to's lines deploy
+# and make, its scene
+protocol/activate . boot
+protocol/activate . crud

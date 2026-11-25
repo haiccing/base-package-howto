@@ -1,74 +1,54 @@
 # base-package-howto
 
-The howto protocol: an mrepo's how-tos by activity, extracted from the packages it links, listed and read.
+The howto protocol: a how-to's steps run where it is installed, each line a request, what each answers checked.
 
-A how-to is where an activity starts: what do you want to do here, and
-how. An mrepo that links this package has a `howto` layer.
-`howto/extract` fills it from the how-tos its packages carry;
-`howto` answers what can be done here, an activity's how-tos, or one
-how-to's steps as typed commands, each with why.
+A how-to is a page and its script, `steps.haicc`, beside it: its steps,
+each line as typed after `haicc`, with what it answers (`# expect:`).
+Deployed, this package is a how-to's boot: an mrepo with the boot
+mrepo's protocols, a service, and the runner, every package in the
+install's store documented in it. A line runs there, at `.`,
+through its own inbox: it sees what is below it, nothing above.
 
-| | |
-|---|---|
-| [mrepo/](mrepo/) | its part of the structure: the howto layer |
-| [test/](test/) | its tests: its protocol as mounted, and the generic ones |
-| [test-reports/](test-reports/) | the report of its last pre-release |
-| [modules/](modules/) | its code, assembled: ours and the third-party code |
+## Links
 
-## Commands
+- [run](modules/pear-full-square/mrepo-base-howto/external/run/)
+- [step](modules/pear-full-square/mrepo-base-howto/external/step/)
+- [report](modules/pear-full-square/mrepo-base-howto/external/report/)
+- [reset](modules/pear-full-square/mrepo-base-howto/external/reset/)
+- [howto](howto/)
+- [mrepo](mrepo/)
+- [test](test/)
+- [test-reports](test-reports/)
+- [modules](modules/)
 
-```
-haicc host howto
-haicc host howto/get . node
-haicc host howto/get . node/deploy
-haicc host howto/extract
-```
+## Included packages
 
-- `howto`, or `howto/get . [<activity> | <activity>/<name>]`: nothing
-  asked, the activities here, each with its how-tos' one-liners; an
-  activity, its how-tos; one how-to, its steps: each a command as it is
-  typed at this mrepo, with why; the last is the check that proves it
-  worked. What is not there is said, with what there is.
-- `howto/extract`: the howto layer written again from the linked
-  packages. Run by a hook, where the help is extracted.
+- [base-package-runtime](../base-package-runtime/)
+- [base-package-info](../base-package-info/)
+- [base-package-help](../base-package-help/)
+- [base-package-haici](../base-package-haici/)
+- [base-package-protocol](../base-package-protocol/)
+- [base-package-boot](../base-package-boot/)
+- [base-package-service](../base-package-service/)
+- [base-package-haicc](../base-package-haicc/)
+- [base-package-crud](../base-package-crud/)
 
-## Writing one
+## Config
 
-A how-to lives in the package it is about: a folder `howto/<name>/`,
-its README.
+The `howto` protocol's, in `protocol.js`; no state. Every action at the
+mrepo itself, `.`, the scene; a how-to by its key,
+`<org>/<package>/<name>` (`haiccing/base-package-crud/query`).
 
-````
-# deploy
-
-Deploys a node in a swarm of this host and brings it into service.
-
-Activity: node
-
-## Steps
-
-```sh
-# the swarm's place, in this mrepo's main
-haicc . crud/create swarms/swarm-1
-# the check: it is there
-haicc . crud/read swarms/swarm-1
-```
-````
-
-- **`Activity: <word>`**: one line. The how-to is then `node/deploy`:
-  its activity, its folder's name.
-- **One `sh` block**: each command as typed at the mrepo that holds the
-  how-to (`.` is that mrepo), the `#` line above it saying why.
-- **The last step is the check**: its why starts with `the check`.
-- The folder `howto/` has a README of its own, linking each how-to, as
-  every folder has.
-
-`howto/extract` says how many how-tos are against this form
-(`problems`); they are in the layer's `problems.json`.
+| action | arguments | what it does |
+|---|---|---|
+| `run`, the default | the how-to | through: the scene thrown away and prepared, every step, every check |
+| `step` | the how-to | the next step, its answers; the first prepares the scene |
+| `report` | the how-to, `json` or `md` | its last run, from the request log |
+| `reset` | the how-to, optional | the scene thrown away; stepping from the first step again |
 
 ## Package
 
 - `protocol.js`: the `howto` protocol, its config and its actions, from
   `mrepo-base-howto`.
+- `mrepo/`: a how-to's boot, the list, its service and its hooks.
 - `main.js`: the dispatcher, the bundle's main, generated.
-
-Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

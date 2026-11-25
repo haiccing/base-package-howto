@@ -1,0 +1,20 @@
+# scene: a how-to's boot, the runner, inside the one this runs in (its unique URI its own, local/runner)
+. boot/deploy runner haiccing/base-package-howto
+# expect: "deployed":"runner"
+# step: the first step: the scene thrown away and prepared, its lines answered
+runner howto/step . haiccing/base-package-crud/query
+# expect: "step":1,"of":6
+# expect: "ok":true
+# step: the next, the scene as the first left it
+runner howto/step . haiccing/base-package-crud/query
+# expect: "step":2
+# expect: swarms/swarm-2
+# step: what was done so far, from the request log, as a page
+runner howto/report . haiccing/base-package-crud/query md
+# expect: # haiccing/base-package-crud/query
+# expect: Not passed: 2 of 6 steps, stepped
+# step: the scene thrown away: stepping starts again at the first
+runner howto/reset .
+# expect: "removed":["swarms"]
+runner howto/step . haiccing/base-package-crud/query
+# expect: "step":1

@@ -28,6 +28,20 @@ test('a module that breaks each: structure, imports, references', (t) => {
     t.alike(checkModule(d, { ours: ['other'] }).map(p => `${p.file} ${p.check}`).sort(), ['index.js imports', 'index.js imports', 'index.js transient', 'internal/m structure'].sort())
     t.alike(checkPackage(d).map(p => p.check), ['transient'], 'a package\'s own code: references')
   } finally { rmSync(d, { recursive: true, force: true }) }
+  const e = mkdtempSync(join(tmpdir(), 'check-'))
+  try {
+    const dev = ['dev', 'env', '3', 'y'].join('-') // (written so, or this file's own check would find it)
+    write(e, { 'index.js': `// written from github.com/x/${dev}\nexport const a = 1\n` })
+    t.alike(checkPackage(e).map(p => [p.check, p.detail]), [['transient', dev]], 'a link to where it was made: transient')
+  } finally { rmSync(e, { recursive: true, force: true }) }
+  // a mention of where it was made, in words, in any of a package's own files
+  const f = mkdtempSync(join(tmpdir(), 'check-'))
+  try {
+    const words = ['development', 'repository'].join(' ') // (written so, or this file's own check would find it)
+    const short = ['dev', 'repo'].join(' ')
+    write(f, { 'README.md': `# p\n\nBuilt in the ${words}.\n`, 'test/run.sh': `# the ${short}'s sources\n`, 'pins': '# nothing of it\n', 'modules/m/README.md': `# m\n\nIn the ${words}.\n`, 'test-reports/full.md': `${words}\n` })
+    t.alike(checkPackage(f).map(p => [p.file, p.check, p.detail]), [['README.md', 'transient', words], ['test/run.sh', 'transient', short]], 'the words, in a README or a script: transient; its modules and its reports not its own')
+  } finally { rmSync(f, { recursive: true, force: true }) }
 })
 
 // The samples written so that this file keeps the rules it tests: a print,

@@ -17,6 +17,9 @@ The tests of pkgm-base-check, a section per file, each test by its name.
 - an action is a documented method: its folder, the function it exports, what its README states
 - a list that does not end with its own package
 - hooks: in their place, on a transition, each a command
+- a layer's structure: a structure type there is, with what it needs
+- explicit, always: a streaming layer declares its structure; without it the layer is a folder: said
+- the names a package lays into its layers: a URI's, or hidden and one of those there are
 
 ## `package.test.js`
 
@@ -27,3 +30,15 @@ The tests of pkgm-base-check, a section per file, each test by its name.
 - the template itself: no test of its own asked, its folder documenting one left alone, no pin
 - a package that breaks each: its files, its sets, a test that is not a unit
 - full holds modules where modules are carried
+
+## `patterns.test.js`
+
+- patterns: read from a package's files; a program started by a hook; a platform and its component; a runnable how-to
+- how-tos: each naming its pattern; a pattern without one, a problem
+
+## `tests.test.js`
+
+- names: quoted, escaped, a template a pattern; a method named test is none
+- a page read: a section a file, an entry over several lines one
+- a page that says what is tested: none
+- a page that drifted: each difference a problem; no page, one
